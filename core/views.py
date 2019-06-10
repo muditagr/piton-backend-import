@@ -73,9 +73,9 @@ class RegistrationAPIView(APIView):
                 }, status=status.HTTP_200_OK)
             else:
                 message = ''
-                for error in user_serializer.errors.values():
-                    message += " "
-                    message += error[0]
+                for key, error in user_serializer.errors.items():
+                    message += key + " : " + str(error)
+                    message += ", "
                 return Response({'status': False,
                                  'message': message},
                                 status=status.HTTP_400_BAD_REQUEST)
@@ -113,9 +113,9 @@ class LoginView(JSONWebTokenAPIView):
                     }, status=status.HTTP_200_OK)
             else:
                 message = ''
-                for error in serializer.errors.values():
-                    message += " "
-                    message += error[0]
+                for key, error in serializer.errors.items():
+                    message += key + " : " + str(error)
+                    message += ", "
                 return Response({'status': False,
                                  'message': message},
                                 status=status.HTTP_400_BAD_REQUEST)
