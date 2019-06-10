@@ -2,8 +2,10 @@ import uuid
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import (
-    BaseUserManager, AbstractBaseUser, User
+    BaseUserManager, AbstractBaseUser
 )
+from django.conf import settings
+
 from datetime import datetime
 from django.db.models import signals
 
@@ -20,7 +22,7 @@ class UserManager(BaseUserManager):
 
     def create_user(self, email=None, password=None):
         """
-        Creates and saves a User with the given email and password.
+        Creates and saves a CustomUser with the given email and password.
         """
         user = self.model(
             email=self.normalize_email(email),
@@ -63,7 +65,7 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser):
+class CustomUser(AbstractBaseUser):
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,
@@ -130,7 +132,7 @@ def user_post_save(sender, instance, signal, *args, **kwargs):
         pass
         # send_verification_email.delay(instance.pk)
 
-signals.post_save.connect(user_post_save, sender=User)
+signals.post_save.connect(user_post_save, sender=settings.AUTH_USER_MODEL)
 
 class ExcersiceData(models.Model):
     user_id = models.CharField(('user_id'), max_length=30, blank=True, null=True)

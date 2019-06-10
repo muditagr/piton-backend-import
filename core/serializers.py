@@ -18,7 +18,7 @@ from rest_framework import serializers
 
 
 # local imports.
-from core.models import User, ExcersiceData, ExcersiceDataDificultyWise
+from core.models import CustomUser, ExcersiceData, ExcersiceDataDificultyWise
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -33,26 +33,26 @@ class UserCreateSerializer(serializers.ModelSerializer):
         first_name = validated_data.get('first_name','')
         last_name = validated_data.get('last_name','')
         email = validated_data['email']
-        user = User.objects.create(**validated_data)
+        user = CustomUser.objects.create(**validated_data)
         user.set_password(validated_data['password'])
         user.is_active = False
         user.save()
         return user
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = ('email', 'username', 'id', 'password', 'first_name', 'last_name')
 
 
 class UserListSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = User
+        model = CustomUser
         fields = ('id', 'first_name', 'last_name', 'email', 'role', 'dificulty', 'is_email_verified')
 
 
 class ExcersiceCreateSerializer(serializers.ModelSerializer):
-    
+
     def validate(self, data, *args, **kwargs):
         return super(ExcersiceCreateSerializer, self).validate(data, *args, **kwargs)
 
@@ -78,7 +78,7 @@ class ExcersiceListSerializer(serializers.ModelSerializer):
 
 
 class ExcersiceDifficulyCreateSerializer(serializers.ModelSerializer):
-    
+
     def validate(self, data, *args, **kwargs):
         return super(ExcersiceDifficulyCreateSerializer, self).validate(data, *args, **kwargs)
 

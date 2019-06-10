@@ -24,7 +24,7 @@ from django.template.loader import render_to_string
 # from .token import account_activation_token
 from django.core.mail import send_mail
 
-from core.models import User, ExcersiceData, ExcersiceDataDificultyWise
+from core.models import CustomUser, ExcersiceData, ExcersiceDataDificultyWise
 from core.serializers import (  UserCreateSerializer,
                                 UserListSerializer,
                                 ExcersiceCreateSerializer,
@@ -53,21 +53,22 @@ class RegistrationAPIView(APIView):
 
                 uid = urlsafe_base64_encode(force_bytes(user.pk)).decode()
                 emailSubject = "Verification Email"
-                emailLink = str(settings.BASEURL) + str("activation/?id=") + str(uid)
+                # emailLink = str(settings.BASEURL) + str("activation/?id=") + str(uid)
+                emailLink = request.build_absolute_uri('/api/v1.0/core/activation/?id=') + str(uid)
+                print(emailLink)
                 emailBody = str('Click on the link for activation ') + str(emailLink)
                 emailFrom = "no-reply@healthapi.com"
-               
                 from_email = settings.EMAIL_HOST_USER
 
                 recipient_list = [request.data.get('email')]
 
                 emailRes = send_mail(subject=emailSubject, message=emailBody, from_email=from_email,
                         recipient_list=recipient_list, fail_silently=False)
-                        
+
                 return Response({
                     'status': True,
-                    #'token': data['token'],
-                    #'data': user_serializer.data,
+                    'token': data['token'],
+                    'data': user_serializer.data,
                     'message': 'Registered Successfully, Please verify your email to login'
                 }, status=status.HTTP_200_OK)
             else:
@@ -97,7 +98,7 @@ class LoginView(JSONWebTokenAPIView):
             if serializer.is_valid():
                 serialized_data = serializer.validate(request.data)
                 email = request.data.get('email')
-                user = User.objects.get(email=email)
+                user = CustomUser.objects.get(email=email)
                 user_serializer = UserListSerializer(user)
                 if(user_serializer.data.get('is_email_verified') == True):
                     return Response({
@@ -163,7 +164,7 @@ class doServerEmail(APIView):
         try:
             emailSubject = "Verification Email"
             emailBody = 'Click on the link for activation '
-            
+
             from_email = settings.EMAIL_HOST_USER
 
             recipient_list = ['']
@@ -187,7 +188,7 @@ class UserAPIView(GenericAPIView):
         List all the users.
         """
         try:
-            users = User.objects.all()
+            users = CustomUser.objects.all()
             user_serializer = UserListSerializer(users, many=True)
 
             users = user_serializer.data
@@ -205,7 +206,7 @@ class EmailAPIView(APIView):
 
     def get(self, request, format=None):
         email = request.query_params.get('email')
-        user = User.objects.filter(email=email)
+        user = CustomUser.objects.filter(email=email)
         if user:
             return Response({'status': False,
                              'message': "Email Already Present"}, status=status.HTTP_200_OK)
@@ -223,12 +224,12 @@ class ActivateApi(GenericAPIView):
         try:
             uid1 = request.query_params.get('id')
             uid = urlsafe_base64_decode(uid1).decode()
-            user = User.objects.get(pk=uid)
+            user = CustomUser.objects.get(pk=uid)
             user.is_active = True
             user.is_email_verified = True
             user.save()
             return HttpResponse('Account is activated, please login into the app.')
-        except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+        except(TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
             return HttpResponse('Activation link is invalid!')
 
 class ForgetAPIView(APIView):
@@ -238,7 +239,7 @@ class ForgetAPIView(APIView):
     def get(self, request, format=None):
         email = request.query_params.get('email')
         try:
-            user = User.objects.get(email=email)
+            user = CustomUser.objects.get(email=email)
         except Exception as e:
             return Response({'status': False,
                              'message': "Email Not Present"}, status=status.HTTP_200_OK)
@@ -272,8 +273,8 @@ class ForgetResetAPIView(APIView):
         try:
 
             uid = urlsafe_base64_decode(uidb64).decode()
-            user = User.objects.get(pk=uid)
-        except(TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = CustomUser.objects.get(pk=uid)
+        except(TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
             user = None
         if user is not None and account_activation_token.check_token(user, token):
 
@@ -295,7 +296,7 @@ class ResendAPIView(APIView):
     def get(self, request, format=None):
         email = request.query_params.get('email')
         try:
-            user = User.objects.get(email=email)
+            user = CustomUser.objects.get(email=email)
         except Exception as e:
             return Response({'status': False,
                              'message': "Email not Present"}, status=status.HTTP_200_OK)
@@ -418,7 +419,7 @@ class ExcersiceDifficultCreateView(APIView):
             steps = request.data.get('sets')
             excercise = request.data.get('excercise')
             difficulty = request.data.get('difficulty')
-            
+
             difexc = {
                 'difficulty': difficulty,
                 'excercise': excercise,

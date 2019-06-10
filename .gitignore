@@ -1,1 +1,8 @@
+*.pyc
+ENV/
+.terraform
+.env
+staticfiles/
 db.sqlite3
+.vscode/settings.json
+local/
